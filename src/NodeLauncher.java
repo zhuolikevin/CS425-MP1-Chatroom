@@ -26,7 +26,7 @@ public class NodeLauncher {
     new Thread(new ConnectionListener(server)).start();
 
     // Enter other nodes' IPs and ports
-    int clientNumber = 2;
+    int clientNumber = 1;
     Scanner[] scanArray = new Scanner[clientNumber];
     String[] hostIpArray = new String[clientNumber];
     Socket[] clientArray = new Socket[clientNumber];
@@ -35,9 +35,9 @@ public class NodeLauncher {
 
     while (i < clientNumber) {
       scanArray[i] = new Scanner(System.in);
-      System.out.print("Enter a Host IP >> ");
+      System.out.print("Enter a node IP\n>> ");
       hostIpArray[i] = scanArray[i].nextLine();
-      System.out.print("Enter a Host port >> ");
+      System.out.print("Enter a node port\n>> ");
       try {
         hostPortArray[i] = scanArray[i].nextInt();
       } catch (Exception e) {

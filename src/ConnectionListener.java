@@ -15,7 +15,7 @@ public class ConnectionListener implements Runnable {
       } catch (IOException e) {
         e.printStackTrace();
       }
-      System.out.println("[NOTICE] Connected with " + connectedClient.getRemoteSocketAddress());
+      System.out.print("\r[NOTICE] Connected with " + connectedClient.getRemoteSocketAddress() + "\n>> ");
       new Thread(new MessageReceiver(connectedClient)).start();
     }
   }
