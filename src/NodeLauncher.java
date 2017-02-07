@@ -15,7 +15,7 @@ public class NodeLauncher {
     if (args.length == 1) {
       portNumber = Integer.parseInt(args[0]);
     } else {
-      System.out.println("Run in format: java Server1 [port]");
+      System.out.println("Run in format: java NodeLauncher [port]");
       System.exit(0);
     }
 
@@ -26,42 +26,52 @@ public class NodeLauncher {
     new Thread(new ConnectionListener(server)).start();
 
     // Enter other nodes' IPs and ports
-    // TODO: Rewrite the codes and take more than one pair of Node info
-    int clientNumber = 4;
+    int clientNumber = 2;
     Scanner[] scanArray = new Scanner[clientNumber];
     String[] hostIpArray = new String[clientNumber];
     Socket[] clientArray = new Socket[clientNumber];
     int[] hostPortArray = new int[clientNumber];
-    
-    for(int i = 0; i < clientNumber; i++){
-    scanArray[i] = new Scanner(System.in);
-    System.out.print("Enter a Host IP >> ");
-    hostIpArray[i] = scanArray[i].nextLine();
-    System.out.print("Enter a Host port >> ");
-    hostPortArray[i] = scanArray[i].nextInt();
+    int i = 0;
 
-    clientArray[i] = new Socket(hostIpArray[i], hostPortArray[i]);
-    clientArray[i].setSoTimeout(10000);
+    while (i < clientNumber) {
+      scanArray[i] = new Scanner(System.in);
+      System.out.print("Enter a Host IP >> ");
+      hostIpArray[i] = scanArray[i].nextLine();
+      System.out.print("Enter a Host port >> ");
+      try {
+        hostPortArray[i] = scanArray[i].nextInt();
+      } catch (Exception e) {
+        System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
+        continue;
+      }
+      try {
+        clientArray[i] = new Socket(hostIpArray[i], hostPortArray[i]);
+      } catch (Exception e) {
+        System.out.println("[ERROR] Cannot connect to this node. Please double check and enter the address again!");
+        continue;
+      }
+      clientArray[i].setSoTimeout(10000);
+      i++;
     }
     
     // Read from keyboard
     BufferedReader keyboradInput = new BufferedReader(new InputStreamReader(System.in));
     // Send message through socket
     PrintStream[] outputStreamArray = new PrintStream[clientNumber];
-    for(int i = 0; i < clientNumber; i++){
+    for(i = 0; i < clientNumber; i++){
     outputStreamArray[i] = new PrintStream(clientArray[i].getOutputStream());}
     boolean flag = true;
     while (flag) {
       System.out.print(">> ");
       String str = keyboradInput.readLine();
-      for(int i = 0; i < clientNumber; i++){
+      for (i = 0; i < clientNumber; i++){
       outputStreamArray[i].println(str);}
       if ("bye".equals(str)) {
         flag = false;
       }
-      }
+    }
     keyboradInput.close();
-    for(int i = 0; i < clientNumber; i++){
+    for (i = 0; i < clientNumber; i++){
     if (clientArray[i] != null) {
       clientArray[i].close();
     }}
