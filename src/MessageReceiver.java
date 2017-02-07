@@ -25,8 +25,7 @@ public class MessageReceiver implements Runnable {
       }
       client.close();
     } catch(Exception e) {
-      System.out.println("Here");
-      System.exit(0);
+      e.printStackTrace();
     }
   }
 }
