@@ -16,15 +16,17 @@ public class MessageReceiver implements Runnable {
       boolean flag = true;
       while (flag) {
         String str = buf.readLine();
-        if ("bye".equals(str)) {
+        if ("bye".equals(str) || str == null) {
           flag = false;
+          System.out.print("\r[NOTICE] Lost connection with " + client.getRemoteSocketAddress() + "\n>> ");
         } else {
-          System.out.println(str);
+          System.out.print("\r["+ client.getRemoteSocketAddress() + "] " + str + "\n>> ");
         }
       }
       client.close();
     } catch(Exception e) {
-      e.printStackTrace();
+      System.out.println("Here");
+      System.exit(0);
     }
   }
 }

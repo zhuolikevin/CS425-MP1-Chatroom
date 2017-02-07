@@ -26,20 +26,20 @@ public class NodeLauncher {
     new Thread(new ConnectionListener(server)).start();
 
     // Enter other nodes' IPs and ports
-    int clientNumber = 1;
-    Scanner[] scanArray = new Scanner[clientNumber];
+    int clientNumber = 4;
+    Scanner scanner;
     String[] hostIpArray = new String[clientNumber];
     Socket[] clientArray = new Socket[clientNumber];
     int[] hostPortArray = new int[clientNumber];
     int i = 0;
 
     while (i < clientNumber) {
-      scanArray[i] = new Scanner(System.in);
+      scanner = new Scanner(System.in);
       System.out.print("Enter a node IP\n>> ");
-      hostIpArray[i] = scanArray[i].nextLine();
+      hostIpArray[i] = scanner.nextLine();
       System.out.print("Enter a node port\n>> ");
       try {
-        hostPortArray[i] = scanArray[i].nextInt();
+        hostPortArray[i] = scanner.nextInt();
       } catch (Exception e) {
         System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
         continue;
@@ -72,8 +72,10 @@ public class NodeLauncher {
     }
     keyboradInput.close();
     for (i = 0; i < clientNumber; i++){
-    if (clientArray[i] != null) {
-      clientArray[i].close();
-    }}
+      if (clientArray[i] != null) {
+        clientArray[i].close();
+      }
+    }
+    System.exit(0);
   }
 }
