@@ -5,9 +5,22 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NodeLauncher {
   private static int DEFAULT_PORT = 11111;
+  
+  public static boolean isIP(String addr){
+	  if(addr.length() < 7 || addr.length() > 15 || "".equals(addr)){
+		  return false;
+	  }
+	  String rexp = "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}"; 
+	  Pattern pat = Pattern.compile(rexp);
+	  Matcher mat = pat.matcher(addr);
+	  boolean ipAddress = mat.find();
+	  return ipAddress;
+  }
 
   public static void main(String[] args) throws Exception {
 
@@ -37,12 +50,19 @@ public class NodeLauncher {
       scanner = new Scanner(System.in);
       System.out.print("Enter a node IP\n>> ");
       hostIpArray[i] = scanner.nextLine();
+      if (isIP(hostIpArray[i]) == false) {
+    	  continue;
+      }
       System.out.print("Enter a node port\n>> ");
       try {
         hostPortArray[i] = scanner.nextInt();
       } catch (Exception e) {
         System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
         continue;
+      }
+      if (hostPortArray[i] == portNumber) {
+    	  System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
+    	  continue;
       }
       try {
         clientArray[i] = new Socket(hostIpArray[i], hostPortArray[i]);
