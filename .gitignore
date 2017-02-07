@@ -6,3 +6,4 @@ bin/
 cs425-ece428-sp17-mp1.iml
 **/*.class
 **/*.DS_Store
+.metadata/

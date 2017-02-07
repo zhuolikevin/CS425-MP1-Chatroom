@@ -27,30 +27,43 @@ public class NodeLauncher {
 
     // Enter other nodes' IPs and ports
     // TODO: Rewrite the codes and take more than one pair of Node info
-    Scanner scan = new Scanner(System.in);
+    int clientNumber = 4;
+    Scanner[] scanArray = new Scanner[clientNumber];
+    String[] hostIpArray = new String[clientNumber];
+    Socket[] clientArray = new Socket[clientNumber];
+    int[] hostPortArray = new int[clientNumber];
+    
+    for(int i = 0; i < clientNumber; i++){
+    scanArray[i] = new Scanner(System.in);
     System.out.print("Enter a Host IP >> ");
-    String hostIp = scan.nextLine();
+    hostIpArray[i] = scanArray[i].nextLine();
     System.out.print("Enter a Host port >> ");
-    int hostPort = scan.nextInt();
+    hostPortArray[i] = scanArray[i].nextInt();
 
-    Socket client = new Socket(hostIp, hostPort);
-    client.setSoTimeout(10000);
+    clientArray[i] = new Socket(hostIpArray[i], hostPortArray[i]);
+    clientArray[i].setSoTimeout(10000);
+    }
+    
     // Read from keyboard
     BufferedReader keyboradInput = new BufferedReader(new InputStreamReader(System.in));
     // Send message through socket
-    PrintStream outputStream = new PrintStream(client.getOutputStream());
+    PrintStream[] outputStreamArray = new PrintStream[clientNumber];
+    for(int i = 0; i < clientNumber; i++){
+    outputStreamArray[i] = new PrintStream(clientArray[i].getOutputStream());}
     boolean flag = true;
     while (flag) {
       System.out.print(">> ");
       String str = keyboradInput.readLine();
-      outputStream.println(str);
+      for(int i = 0; i < clientNumber; i++){
+      outputStreamArray[i].println(str);}
       if ("bye".equals(str)) {
         flag = false;
       }
-    }
+      }
     keyboradInput.close();
-    if (client != null) {
-      client.close();
-    }
+    for(int i = 0; i < clientNumber; i++){
+    if (clientArray[i] != null) {
+      clientArray[i].close();
+    }}
   }
 }
