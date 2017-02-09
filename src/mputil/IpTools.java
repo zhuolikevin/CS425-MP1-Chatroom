@@ -54,8 +54,7 @@ public class IpTools {
     if ("localhost".equals(addr)) { return true; }
     try {
       InetAddress selfAddress = InetAddress.getLocalHost();
-      String parsedIp = parseIpPort(selfAddress.getHostAddress().substring(1))[0];
-      return parsedIp == addr;
+      return selfAddress.getHostAddress().equals(addr);
     } catch (Exception e) {
       notifHandler.printExceptionMsg(e, "Cannot read this host IP");
       return false;
