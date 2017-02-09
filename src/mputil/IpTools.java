@@ -13,6 +13,11 @@ public class IpTools {
 
   public IpTools() {}
 
+  /**
+   * Read address list from a file
+   * @param filename  File name which stores the addresses
+   * @return          An Java ArrayList with a address/port line in each element
+   */
   public ArrayList<String> readAddressBook(String filename) {
     try {
       BufferedReader br = new BufferedReader(new FileReader(RES_PREFIX + filename));
@@ -31,6 +36,11 @@ public class IpTools {
     }
   }
 
+  /**
+   * Parse a "xx.xx.xx.xx:port" string to a string array [xx.xx.xx.xx, port]
+   * @param ipPortLine  A string in "xx.xx.xx.xx:port" format
+   * @return            A string array as [xx.xx.xx.xx, port]
+   */
   public String[] parseIpPort(String ipPortLine) {
     String[] result = new String[2];
     result[0] = ipPortLine.split(":")[0].trim();
@@ -38,6 +48,11 @@ public class IpTools {
     return result;
   }
 
+  /**
+   * Check if the input is a valid IP address
+   * @param addr  Input IP address, "localhost" is allowed
+   * @return      Boolean value for validation
+   */
   public boolean isValidIp(String addr) {
     if ("localhost".equals(addr)) { return true; }
     if(addr.length() < 7 || addr.length() > 15 || "".equals(addr)){ return false; }
@@ -49,6 +64,12 @@ public class IpTools {
     return ipAddress;
   }
 
+  /**
+   * Check if the address with port is the localhost
+   * @param addr      IP address
+   * @param samePort  A boolean variable whether the port is the same
+   * @return          Boolean value for validation
+   */
   public boolean isOwnAddress(String addr, boolean samePort) {
     if (!samePort) { return false; }
     if ("localhost".equals(addr)) { return true; }
