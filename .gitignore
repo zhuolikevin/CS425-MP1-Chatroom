@@ -2,6 +2,7 @@
 .settings/
 .classpath
 bin/
+dist/
 .idea/
 cs425-ece428-sp17-mp1.iml
 **/*.class
