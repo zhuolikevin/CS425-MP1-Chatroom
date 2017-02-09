@@ -1,15 +1,10 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NodeLauncher {
-  private static int DEFAULT_PORT = 11111;
   
   public static boolean isIP(String addr){
 	  if(addr.length() < 7 || addr.length() > 15 || "".equals(addr)){
@@ -24,78 +19,64 @@ public class NodeLauncher {
 
   public static void main(String[] args) throws Exception {
 
-    int portNumber = DEFAULT_PORT;
+    int portNum;
+    Node thisNode;
+
     if (args.length == 1) {
-      portNumber = Integer.parseInt(args[0]);
+      portNum = Integer.parseInt(args[0]);
+      thisNode = new Node(portNum);
     } else {
-      System.out.println("Run in format: java NodeLauncher [port]");
-      System.exit(0);
+      System.out.println("[NOTICE] No port specified. Use default value.");
+      thisNode = new Node();
     }
 
-    // Play as a server, which waits for connection requests
-    ServerSocket server = new ServerSocket(portNumber);
-    InetAddress currentIp = InetAddress.getLocalHost();
-    System.out.println("Current IP Address: " + currentIp.getHostAddress() + ":" + String.valueOf(portNumber));
-    new Thread(new ConnectionListener(server)).start();
+    thisNode.setupServer();
 
     // Enter other nodes' IPs and ports
-    int clientNumber = 4;
+    BufferedReader keyboardInput = new BufferedReader(new InputStreamReader(System.in));
+    System.out.print("How many nodes you wish to connect?\n>> ");
+    int connectionNum = Integer.parseInt(keyboardInput.readLine());
+
     Scanner scanner;
-    String[] hostIpArray = new String[clientNumber];
-    Socket[] clientArray = new Socket[clientNumber];
-    int[] hostPortArray = new int[clientNumber];
+    String inputIp;
+    int inputPort;
     int i = 0;
 
-    while (i < clientNumber) {
+    while (i < connectionNum) {
       scanner = new Scanner(System.in);
       System.out.print("Enter a node IP\n>> ");
-      hostIpArray[i] = scanner.nextLine();
-      if (isIP(hostIpArray[i]) == false) {
+      inputIp = scanner.nextLine();
+      if (isIP(inputIp) == false) {
     	  continue;
       }
       System.out.print("Enter a node port\n>> ");
       try {
-        hostPortArray[i] = scanner.nextInt();
+        inputPort = scanner.nextInt();
       } catch (Exception e) {
         System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
         continue;
       }
-      if (hostPortArray[i] == portNumber) {
-    	  System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
-    	  continue;
-      }
-      try {
-        clientArray[i] = new Socket(hostIpArray[i], hostPortArray[i]);
-      } catch (Exception e) {
-        System.out.println("[ERROR] Cannot connect to this node. Please double check and enter the address again!");
+//      if (inputPort == portNum) {
+//    	  System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
+//    	  continue;
+//      }
+      if (thisNode.initConnections(inputIp, inputPort) == false) {
         continue;
       }
-      clientArray[i].setSoTimeout(10000);
       i++;
     }
-    
-    // Read from keyboard
-    BufferedReader keyboradInput = new BufferedReader(new InputStreamReader(System.in));
-    // Send message through socket
-    PrintStream[] outputStreamArray = new PrintStream[clientNumber];
-    for(i = 0; i < clientNumber; i++){
-    outputStreamArray[i] = new PrintStream(clientArray[i].getOutputStream());}
+
     boolean flag = true;
     while (flag) {
       System.out.print(">> ");
-      String str = keyboradInput.readLine();
-      for (i = 0; i < clientNumber; i++){
-      outputStreamArray[i].println(str);}
+      String str = keyboardInput.readLine();
+      thisNode.multicastMessage(str);
       if ("bye".equals(str)) {
+        thisNode.closeAllConnections();
         flag = false;
       }
     }
-    keyboradInput.close();
-    for (i = 0; i < clientNumber; i++){
-      if (clientArray[i] != null) {
-        clientArray[i].close();
-      }
-    }
+    keyboardInput.close();
     System.exit(0);
   }
 }
