@@ -3,13 +3,16 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import mputil.NodeNotifHandler;
 
 public class Node {
   public static final int DEFAULT_PORT = 10000;
+  public static final String TERMINATION_MSG = "bye";
 
   protected int portNum;
   protected ArrayList<Socket> clientSockList = new ArrayList<>();
   protected ArrayList<PrintStream> outgoingStreamList = new ArrayList<>();
+  private NodeNotifHandler notifHandler = new NodeNotifHandler();
 
   public Node() { this.portNum = DEFAULT_PORT; }
 
@@ -24,7 +27,7 @@ public class Node {
               String.valueOf(portNum));
       new Thread(new ConnectionListener(server)).start();
     } catch (Exception e) {
-      handleException(e, "Cannot set up server");
+      notifHandler.printExceptionMsg(e, "Cannot set up server");
       System.exit(0);
     }
   }
@@ -36,7 +39,7 @@ public class Node {
       outgoingStreamList.add(new PrintStream(connectionSocket.getOutputStream()));
       return true;
     } catch (Exception e) {
-      handleException(e, "Cannot connect to node " + ip + ":" + port);
+      notifHandler.printExceptionMsg(e, "Cannot connect to node " + ip + ":" + port);
       return false;
     }
   }
@@ -53,14 +56,9 @@ public class Node {
         try {
           clientSockList.get(i).close();
         } catch (Exception e) {
-          handleException(e, "Fail to close the connections");
+          notifHandler.printExceptionMsg(e, "Fail to close the connections");
         }
       }
     }
-  }
-
-  protected void handleException(Exception e, String errorMsg) {
-    System.out.println("[ERROR] " + errorMsg);
-    e.printStackTrace();
   }
 }

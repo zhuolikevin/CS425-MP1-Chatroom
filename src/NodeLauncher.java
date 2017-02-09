@@ -1,28 +1,22 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import mputil.*;
 
 public class NodeLauncher {
-  
-  public static boolean isIP(String addr){
-	  if(addr.length() < 7 || addr.length() > 15 || "".equals(addr)){
-		  return false;
-	  }
-	  String rexp = "([1-9]|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])(\\.(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])){3}"; 
-	  Pattern pat = Pattern.compile(rexp);
-	  Matcher mat = pat.matcher(addr);
-	  boolean ipAddress = mat.find();
-	  return ipAddress;
-  }
+  private static NodeNotifHandler notifHandler = new NodeNotifHandler();
 
   public static void main(String[] args) throws Exception {
-
     int portNum;
     Node thisNode;
+    boolean readFromFile = false;
 
-    if (args.length == 1) {
+    if (args.length == 2) {
+      readFromFile = true;
+      portNum = Integer.parseInt(args[0]);
+      thisNode = new Node(portNum);
+    } else if (args.length == 1) {
       portNum = Integer.parseInt(args[0]);
       thisNode = new Node(portNum);
     } else {
@@ -30,50 +24,79 @@ public class NodeLauncher {
       thisNode = new Node();
     }
 
+    /* Init server listening */
     thisNode.setupServer();
 
-    // Enter other nodes' IPs and ports
-    BufferedReader keyboardInput = new BufferedReader(new InputStreamReader(System.in));
-    System.out.print("How many nodes you wish to connect?\n>> ");
-    int connectionNum = Integer.parseInt(keyboardInput.readLine());
-
-    Scanner scanner;
+    /* Setup connection with other nodes */
     String inputIp;
     int inputPort;
-    int i = 0;
+    IpTools tool = new IpTools();
+    BufferedReader keyboardInput = new BufferedReader(new InputStreamReader(System.in));
+    if (readFromFile) {
+      boolean readyForConnection = false;
+      while (!readyForConnection) {
+        System.out.print("Ready for connection? (y/n)\n>> ");
+        readyForConnection = "y".equals(keyboardInput.readLine());
+      }
 
-    while (i < connectionNum) {
-      scanner = new Scanner(System.in);
-      System.out.print("Enter a node IP\n>> ");
-      inputIp = scanner.nextLine();
-      if (isIP(inputIp) == false) {
-    	  continue;
+      ArrayList<String> addressList = tool.readAddressBook(args[1]);
+      for (int i = 0; i < addressList.size(); i++) {
+        inputIp = tool.parseIpPort(addressList.get(i))[0];
+        if (!tool.isValidIp(inputIp)) {
+          notifHandler.printExceptionMsg(new IllegalArgumentException(), "Invalid IP address");
+          System.exit(0);
+        }
+        try {
+          inputPort = Integer.parseInt(tool.parseIpPort(addressList.get(i))[1]);
+          if (tool.isOwnAddress(inputIp, inputPort == thisNode.portNum)) {
+            continue;
+          }
+          if (!thisNode.initConnections(inputIp, inputPort)) { System.exit(0); }
+        } catch (Exception e) {
+          notifHandler.printExceptionMsg(e, "Invalid port number");
+          System.exit(0);
+        }
       }
-      System.out.print("Enter a node port\n>> ");
-      try {
-        inputPort = scanner.nextInt();
-      } catch (Exception e) {
-        System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
-        continue;
+    } else {
+      System.out.print("How many nodes you wish to connect?\n>> ");
+      int connectionNum = Integer.parseInt(keyboardInput.readLine());
+      Scanner scanner;
+      int i = 0;
+
+      while (i < connectionNum) {
+        scanner = new Scanner(System.in);
+        System.out.print("Enter a node address in [xx.xx.xx.xx:port] format\n>> ");
+        String inputIpPortLine = scanner.nextLine();
+        inputIp = tool.parseIpPort(inputIpPortLine)[0];
+        if (!tool.isValidIp(inputIp)) {
+          notifHandler.printExceptionMsg(new IllegalArgumentException(), "Invalid IP address, please re-enter");
+          continue;
+        }
+        try {
+          inputPort = Integer.parseInt(tool.parseIpPort(inputIpPortLine)[1]);
+        } catch (Exception e) {
+          notifHandler.printExceptionMsg(e, "Invalid port number, please re-enter");
+          continue;
+        }
+        if (tool.isOwnAddress(inputIp, inputPort == thisNode.portNum)) {
+          notifHandler.printExceptionMsg(new IllegalArgumentException(), "Invalid self-connection");
+          continue;
+        }
+        if (!thisNode.initConnections(inputIp, inputPort)) { continue; }
+        i++;
       }
-//      if (inputPort == portNum) {
-//    	  System.out.println("[ERROR] Invalid port number. Please double check and enter the address again!");
-//    	  continue;
-//      }
-      if (thisNode.initConnections(inputIp, inputPort) == false) {
-        continue;
-      }
-      i++;
     }
 
-    boolean flag = true;
-    while (flag) {
+    /* Message input and multicast */
+    boolean keepChatting = true;
+    while (keepChatting) {
       System.out.print(">> ");
       String str = keyboardInput.readLine();
+      if ("".equals(str)) { continue; }
       thisNode.multicastMessage(str);
-      if ("bye".equals(str)) {
+      if (Node.TERMINATION_MSG.equals(str)) {
         thisNode.closeAllConnections();
-        flag = false;
+        keepChatting = false;
       }
     }
     keyboardInput.close();
