@@ -39,6 +39,8 @@ public class NodeLauncher {
         readyForConnection = "y".equals(keyboardInput.readLine());
       }
 
+      thisNode.setReadyFlag();
+
       ArrayList<String> addressList = tool.readAddressBook(args[1]);
       for (int i = 0; i < addressList.size(); i++) {
         inputIp = tool.parseIpPort(addressList.get(i))[0];
