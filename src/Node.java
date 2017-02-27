@@ -7,10 +7,24 @@ import java.util.HashMap;
 import java.util.Timer;
 
 import mputil.NodeNotifHandler;
+import java.util.*;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 public class Node {
   public static final int DEFAULT_PORT = 10000;
   public static final String TERMINATION_MSG = "bye";
+  //revise the TotoalNodeNum to 8
+  public static final int TotalNodeNum = 2;
+
+  public int total_priority = 0;
+//  public int proposed_priority = 0;
+  //To Do: change to priority queue(heap) to reduce complexity
+
+//  public List<Message> sendList = new ArrayList<Message>();
+//  public List<List<Message>> msgList = new ArrayList<List<Message>>();
+  public PriorityQueue<Message> sendList = new PriorityQueue<Message> (1, MyComparator1);
+  public List<Queue<Message>> msgList = new ArrayList<Queue<Message>>();
 
   protected int portNum;
   protected boolean readyFlag = false;
@@ -23,18 +37,20 @@ public class Node {
 
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
 
-  public Node() { this.portNum = DEFAULT_PORT; }
+  public Node() { this.portNum = DEFAULT_PORT;
+  }
 
   public Node(int port) { this.portNum = port; }
 
-  public void setupServer() {
+  public void setupServer(Node thisNode) {
     try {
+      
       ServerSocket server = new ServerSocket(portNum);
       InetAddress currentIp = InetAddress.getLocalHost();
       System.out.println("Current IP Address: " +
               currentIp.getHostAddress() + ":" +
               String.valueOf(portNum));
-      new Thread(new ConnectionListener(server, this)).start();
+      new Thread(new ConnectionListener(server, thisNode)).start();
     } catch (Exception e) {
       notifHandler.printExceptionMsg(e, "Cannot set up server");
       System.exit(0);
@@ -109,4 +125,20 @@ public class Node {
   public Socket getServerSocket(String ip) { return this.serverSockMap.get(ip); }
   public void putSocketToServerSockMap(String ip, Socket serverSock) { this.serverSockMap.put(ip, serverSock); }
   public void removeSocketFromServerSockMap(String ip) { this.serverSockMap.remove(ip); }
+
+  public static Comparator<Message> MyComparator1 = new Comparator<Message>() {
+    public int compare (Message msg1, Message msg2) {
+      if (msg1.priority[0] > msg2.priority[0])     //the bigger, the latter
+        return 1;
+      else if (msg1.priority[0] == msg2.priority[0])
+      {
+        if(msg1.priority[1] > msg2.priority[1])
+          return 1;
+        else if(msg1.priority[1] == msg2.priority[1])
+          return 0;
+        else return -1;
+      }
+      else return -1;
+    }
+  };
 }
