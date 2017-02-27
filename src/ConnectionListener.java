@@ -7,7 +7,6 @@ import mputil.*;
 public class ConnectionListener implements Runnable {
   private Socket connectedClient = null;
   private ServerSocket server;
-  private Node thisNode;
 
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
   private Node thisNode;
