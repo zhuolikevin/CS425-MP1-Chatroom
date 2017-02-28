@@ -3,6 +3,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Date;
 import java.util.Timer;
 import java.util.Queue;
 import java.util.PriorityQueue;
@@ -12,7 +13,7 @@ public class MessageReceiver implements Runnable {
   private Socket client;
 
   private Timer failureDetectorTimer = new Timer(true);
-  private FailureDetector failureDetector;
+  private FailureDetector failureDetector = null;
 
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
   private Node thisNode;
@@ -20,10 +21,6 @@ public class MessageReceiver implements Runnable {
   public MessageReceiver(Socket client, Node thisNode){
     this.client = client;
     this.thisNode = thisNode;
-
-    // For each message receiver, start a timer task for heartbeat
-    this.failureDetector = new FailureDetector(client, thisNode);
-    this.failureDetectorTimer.schedule(failureDetector, 5200);  // Setup delay for 5 seconds
   }
 
   /**
@@ -46,26 +43,40 @@ public class MessageReceiver implements Runnable {
 
       while (keepConnection) {
         String str = buf.readLine();
+        if (str == null) {
+          notifHandler.printNoticeMsg("Lost connection with " + remoteAddress + " at: " + new Date().getTime());
+          break;
+        }
+
+        // Extract Sender Node ID
         messageSender = str.substring(0, 5);
         str = str.substring(5);
         
-        if (Node.TERMINATION_MSG.equals(str) || str == null) {
+        if (Node.TERMINATION_MSG.equals(str)) {
+          /* Termination Message */
           keepConnection = false;
-          notifHandler.printNoticeMsg("Lost connection with " + remoteAddress);
+          notifHandler.printNoticeMsg("Lost connection with " + remoteAddress + " at: " + new Date().getTime());
         } else if ("[HB]".equals(str)) {
+          /* Heartbeat */
           if (!thisNode.getReadyFlag()) { continue; }
 
-          // Reset failure detection timer
-          failureDetectorTimer.cancel();
-          failureDetectorTimer = new Timer(true);
-          failureDetector.cancel();
-          failureDetector = new FailureDetector(client, thisNode);
+          // For each message receiver, start a timer task for heartbeat
+          if (failureDetector == null) {
+            failureDetector = new FailureDetector(messageSender, client, thisNode);
+          } else {
+            // Reset failure detection timer
+            failureDetectorTimer.cancel();
+            failureDetectorTimer = new Timer(true);
+            failureDetector.cancel();
+            failureDetector = new FailureDetector(messageSender, client, thisNode);
+          }
           failureDetectorTimer.schedule(failureDetector, 200);
         } else if (str.length() > 6 && "[FAIL]".equals(str.substring(0, 6))) {
-          String ip = str.substring(6);
-          thisNode.cancelConnectionWithIp(ip);
+          /* Heartbeat Failure Informing */
+          String nodeId = str.substring(6);
+          thisNode.cancelConnectionWithIp(nodeId);
         } else if (str.substring(0, 3).equals("[M]")) {
-          
+          /* Messages */
           clientSo = thisNode.clientSockMap.get(messageSender);
           index = thisNode.clientSockList.indexOf(clientSo);
           ps = thisNode.outgoingStreamList.get(index);
@@ -85,8 +96,6 @@ public class MessageReceiver implements Runnable {
             proposed_priority = co.priority[0] + 1;
           }
           thisNode.total_priority = proposed_priority;
-         
-          // To Do: How to avoid concurrent modification of thisNode.total_priority
           
           Message m = new Message(str);
           m.original_priority[0] = Integer.parseInt(str.split("\\[OP]")[1].split("\\.")[0]);

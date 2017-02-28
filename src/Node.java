@@ -17,7 +17,7 @@ public class Node {
 
   // Connection Status
   protected int portNum;
-  protected String nodeId = String.valueOf(portNum);
+  protected String nodeId;
   
   protected boolean readyFlag = false;
   protected ArrayList<Socket> clientSockList = new ArrayList<>();
@@ -31,8 +31,14 @@ public class Node {
   // Notification Utils
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
 
-  public Node() { this.portNum = DEFAULT_PORT; }
-  public Node(int port) { this.portNum = port; }
+  public Node() {
+    this.portNum = DEFAULT_PORT;
+    this.nodeId = String.valueOf(portNum);
+  }
+  public Node(int port) {
+    this.portNum = port;
+    this.nodeId = String.valueOf(portNum);
+  }
 
   public void setupServer(Node thisNode) {
     try {
@@ -56,9 +62,9 @@ public class Node {
       outgoingStreamList.add(new PrintStream(connectionSocket.getOutputStream()));
 
       // Begin heartbeat to the node once connected
-      heartBeaterTaskMap.put(ip, new HeartBeater(connectionSocket));
+      heartBeaterTaskMap.put(String.valueOf(port), new HeartBeater(connectionSocket, this));
       Timer timer = new Timer(true);
-      timer.schedule(heartBeaterTaskMap.get(ip), 0, 100);
+      timer.schedule(heartBeaterTaskMap.get(String.valueOf(port)), 0, 100);
 
       return true;
     } catch (Exception e) {
@@ -88,15 +94,15 @@ public class Node {
     }
   }
 
-  public HeartBeater getHeartBeater(String ip) { return this.heartBeaterTaskMap.get(ip); }
+  public HeartBeater getHeartBeater(String nodeId) { return this.heartBeaterTaskMap.get(nodeId); }
 
-  public void cancelConnectionWithIp(String ip) throws Exception {
+  public void cancelConnectionWithIp(String nodeId) throws Exception {
 
-    HeartBeater curHearBeat = getHeartBeater(ip);
+    HeartBeater curHearBeat = getHeartBeater(nodeId);
     if (curHearBeat != null) { curHearBeat.cancel(); }
 
-    Socket outgoingSocket = getClientSocket(ip);
-    removeSocketFromClientSockMap(ip);
+    Socket outgoingSocket = getClientSocket(nodeId);
+    removeSocketFromClientSockMap(nodeId);
     if (outgoingSocket != null) {
       int sockIndex = clientSockList.indexOf(outgoingSocket);
       removeSocketFromClientSockList(outgoingSocket);
@@ -104,18 +110,18 @@ public class Node {
       outgoingSocket.close();
     }
 
-    Socket incomingSocket = getServerSocket(ip);
-    removeSocketFromServerSockMap(ip);
+    Socket incomingSocket = getServerSocket(nodeId);
+    removeSocketFromServerSockMap(nodeId);
     if (incomingSocket != null) { incomingSocket.close(); }
   }
 
-  public Socket getClientSocket(String ip) { return this.clientSockMap.get(ip); }
+  public Socket getClientSocket(String nodeId) { return this.clientSockMap.get(nodeId); }
   public void removeSocketFromClientSockList(Socket removedSock) { this.clientSockList.remove(removedSock); }
-  public void removeSocketFromClientSockMap(String ip) { this.clientSockMap.remove(ip); }
+  public void removeSocketFromClientSockMap(String nodeId) { this.clientSockMap.remove(nodeId); }
 
-  public Socket getServerSocket(String ip) { return this.serverSockMap.get(ip); }
-  public void putSocketToServerSockMap(String ip, Socket serverSock) { this.serverSockMap.put(ip, serverSock); }
-  public void removeSocketFromServerSockMap(String ip) { this.serverSockMap.remove(ip); }
+  public Socket getServerSocket(String nodeId) { return this.serverSockMap.get(nodeId); }
+  public void putSocketToServerSockMap(String nodeId, Socket serverSock) { this.serverSockMap.put(nodeId, serverSock); }
+  public void removeSocketFromServerSockMap(String nodeId) { this.serverSockMap.remove(nodeId); }
 
   public static Comparator<Message> MyComparator1 = new Comparator<Message>() {
     public int compare (Message msg1, Message msg2) {
