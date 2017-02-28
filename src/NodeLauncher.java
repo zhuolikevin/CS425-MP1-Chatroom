@@ -104,10 +104,12 @@ public class NodeLauncher {
     /* Keyboard Input */
     boolean keepChatting = true;
     int proposed_priority;
+    String str = null;
+    String message = null;
 
     while (keepChatting) {
       System.out.print(">> ");
-      String str = null;
+
       try { str =  keyboardInput.readLine(); }
       catch (IOException e) { e.printStackTrace(); }
 
@@ -136,8 +138,8 @@ public class NodeLauncher {
          thisNode.total_priority = proposed_priority;
 
         // To Do: How to avoid concurrent modification of thisNode.total_priority
-
-         Message m = new Message(str);
+         message = str.substring(8);
+         Message m = new Message(message);
          m.original_priority[0] = proposed_priority;
          m.original_priority[1] = thisNode.portNum;
          m.priority[0] = proposed_priority;
@@ -147,7 +149,7 @@ public class NodeLauncher {
          temp.add(m);
          thisNode.msgList.add(temp);
 
-         str = String.format(str + " " + "[OP]%d.%d", proposed_priority, thisNode.portNum);
+         str = String.format(str + "[OP]%d.%d", proposed_priority, thisNode.portNum);
          thisNode.multicastMessage(str);
       }
     }

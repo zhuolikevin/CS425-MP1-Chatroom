@@ -16,7 +16,7 @@ public class MessageReceiver implements Runnable {
   private FailureDetector failureDetector = null;
 
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
-  private Node thisNode;
+  private Node thisNode = null;
 
   public MessageReceiver(Socket client, Node thisNode){
     this.client = client;
@@ -29,6 +29,7 @@ public class MessageReceiver implements Runnable {
   public void run() {
     String remoteAddress = client.getRemoteSocketAddress().toString().substring(1);
     String messageSender = null;
+    String message = null;
     Socket clientSo = null;
     int index = 0;
     PrintStream ps;
@@ -42,6 +43,7 @@ public class MessageReceiver implements Runnable {
       int[] id_original_priority = new int[2];
 
       while (keepConnection) {
+       
         String str = buf.readLine();
         if (str == null) {
           notifHandler.printNoticeMsg("Lost connection with " + remoteAddress + " at: " + new Date().getTime());
@@ -63,19 +65,23 @@ public class MessageReceiver implements Runnable {
           // For each message receiver, start a timer task for heartbeat
           if (failureDetector == null) {
             failureDetector = new FailureDetector(messageSender, client, thisNode);
-          } else {
+          } 
+          else {
             // Reset failure detection timer
             failureDetectorTimer.cancel();
             failureDetectorTimer = new Timer(true);
             failureDetector.cancel();
             failureDetector = new FailureDetector(messageSender, client, thisNode);
           }
-          failureDetectorTimer.schedule(failureDetector, 200);
+          failureDetectorTimer.schedule(failureDetector, 2000000);
         } else if (str.length() > 6 && "[FAIL]".equals(str.substring(0, 6))) {
           /* Heartbeat Failure Informing */
           String nodeId = str.substring(6);
           thisNode.cancelConnectionWithIp(nodeId);
-        } else if (str.substring(0, 3).equals("[M]")) {
+        } 
+        
+        
+          else if (str.substring(0, 3).equals("[M]")) {
           /* Messages */
           clientSo = thisNode.clientSockMap.get(messageSender);
           index = thisNode.clientSockList.indexOf(clientSo);
@@ -97,7 +103,8 @@ public class MessageReceiver implements Runnable {
           }
           thisNode.total_priority = proposed_priority;
           
-          Message m = new Message(str);
+          message = str.substring(3).split("\\[OP]")[0];
+          Message m = new Message(message);
           m.original_priority[0] = Integer.parseInt(str.split("\\[OP]")[1].split("\\.")[0]);
           m.original_priority[1] = Integer.parseInt(str.split("\\[OP]")[1].split("\\.")[1]);
           m.priority[0] = proposed_priority;
@@ -105,28 +112,32 @@ public class MessageReceiver implements Runnable {
           thisNode.sendList.add(m);
 
           // send back to the sender of this message
-          str = String.format("%s[PP]%d.%d" + " " + "[OP]%d.%d", thisNode.nodeId, m.priority[0], m.priority[1], 
+          str = String.format("%s[PP]%d.%d" + "[OP]%d.%d", thisNode.nodeId, m.priority[0], m.priority[1], 
               m.original_priority[0], m.original_priority[1]);
           ps.println(str);
-          System.out.println("proposed priority sent back to message sender!");
-          continue;
-        } else if (str.substring(0, 4).equals("[PP]")) {
-          System.out.println("proposed priority received!");
-          id_original_priority[0] = Integer.parseInt(str.split(" ")[1].split("]|\\.")[1]);
-          id_original_priority[1]  = Integer.parseInt(str.split(" ")[1].split("]|\\.")[2]);
+
+          //continue;
+        } 
+          else if (str.substring(0, 4).equals("[PP]")) {
+
+          id_original_priority[0] = Integer.parseInt(str.split("\\[PP]|\\[OP]")[2].split("\\.")[0]);
+          id_original_priority[1]  = Integer.parseInt(str.split("\\[PP]|\\[OP]")[2].split("\\.")[1]);
           Message mo = null;
           Queue<Message> msglo = null;
-          System.out.println("initialization finished after receiveing proposed priority");
 
+          
           for(Message n : thisNode.sendList){
+              
             if (n.original_priority[0] == id_original_priority[0] &&
                 n.original_priority[1] == id_original_priority[1]){
               mo = n;
-              mo.priority[0] = Integer.parseInt(str.split(" ")[0].split("]|\\.")[1]);
-              mo.priority[1] = Integer.parseInt(str.split(" ")[0].split("]|\\.")[2]);
+
+              mo.priority[0] = Integer.parseInt(str.split("\\[PP]|\\[OP]")[1].split("\\.")[0]);
+              mo.priority[1] = Integer.parseInt(str.split("\\[PP]|\\[OP]")[1].split("\\.")[1]);
               break;
             }
           }
+
           for(Queue<Message> msgl: thisNode.msgList){
             Message msglM = msgl.peek();
             if (msglM.original_priority[0] == id_original_priority[0]
@@ -141,7 +152,7 @@ public class MessageReceiver implements Runnable {
           if (msglo.size() == thisNode.totalNodeNum){
             int[] agreed_priority = new int[2];
             agreed_priority = msglo.peek().priority;
-            str = String.format("%s[AP]%d.%d" + " " + "[OP]%d.%d", thisNode.nodeId, agreed_priority[0], agreed_priority[1],
+            str = String.format("%s[AP]%d.%d" + "[OP]%d.%d", thisNode.nodeId, agreed_priority[0], agreed_priority[1],
                   msglo.peek().getOriPrio()[0],
                   msglo.peek().getOriPrio()[1]);
             thisNode.multicastMessage(str);
@@ -168,26 +179,27 @@ public class MessageReceiver implements Runnable {
             thisNode.total_priority = mo.priority[0];
           
             // self check for deliverable messages
-            while (thisNode.sendList.peek().label.equals("deliverable")) {
+            while (!thisNode.sendList.isEmpty() && thisNode.sendList.peek().label.equals("deliverable")) {
               mo = thisNode.sendList.poll();
               int senderPort = mo.getOriPrio()[1];
-              String syso = String.format("[%d]%s", senderPort, mo.message.substring(3));
+              //
+              String syso = String.format("[%d]%s", senderPort, mo.message);
               System.out.println(syso);
             }
+            System.out.print(">> ");
           }
-          continue;
         } else if (str.substring(0, 4).equals("[AP]")) { //when receive agreed priority from input stream
           Message mo = null;
           for (Message mn: thisNode.sendList) {
-            if (mn.getOriPrio()[0] == Integer.parseInt(str.split(" ")[1].split("]|\\.")[1]) &&
-                mn.getOriPrio()[1] == Integer.parseInt(str.split(" ")[1].split("]|\\.")[2])){
+            if (mn.getOriPrio()[0] == Integer.parseInt(str.split("\\[OP]")[1].split("\\.")[0]) &&
+                mn.getOriPrio()[1] == Integer.parseInt(str.split("\\[OP]")[1].split("\\.")[1])){
               mo = mn;
               break;
             }
           }
           thisNode.sendList.remove(mo);
-          mo.getPriority()[0] = Integer.parseInt(str.split(" ")[0].split("]|\\.")[1]);
-          mo.getPriority()[1] = Integer.parseInt(str.split(" ")[0].split("]|\\.")[2]);
+          mo.getPriority()[0] = Integer.parseInt(str.split("\\[AP]|\\[OP]")[1].split("\\.")[0]);
+          mo.getPriority()[1] = Integer.parseInt(str.split("\\[AP]|\\[OP]")[1].split("\\.")[1]);
           mo.label = "deliverable";
           thisNode.sendList.add(mo);
       
@@ -202,13 +214,17 @@ public class MessageReceiver implements Runnable {
       
           // self check for deliverable messages
       
-          while (thisNode.sendList.peek().label.equals("deliverable")) {
+          while (!thisNode.sendList.isEmpty() && thisNode.sendList.peek().label.equals("deliverable")) {
             mo = thisNode.sendList.poll();
             int senderPort = mo.getOriPrio()[1];
-            String syso = String.format("[%d]%s", senderPort, mo.message.substring(3));
+            //
+            String syso = String.format("[%d]%s", senderPort, mo.message);
             System.out.println(syso);
           }
-          continue;
+          System.out.print(">> ");
+        }
+        else{
+            System.out.println("Error!");
         }
       }
       client.close();
