@@ -30,7 +30,6 @@ public class ConnectionListener implements Runnable {
 
       IpTools tool = new IpTools();
       String ip = tool.parseIpPort(connectedClient.getRemoteSocketAddress().toString().substring(1))[0];
-      thisNode.putSocketToServerSockMap(ip, connectedClient);
       new Thread(new MessageReceiver(connectedClient, thisNode)).start();
     }
   }

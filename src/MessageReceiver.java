@@ -35,18 +35,24 @@ public class MessageReceiver implements Runnable {
    */
   public void run() {
     String remoteAddress = client.getRemoteSocketAddress().toString().substring(1);
+    String messageSender = null;
+    Socket clientSo = null;
+    int index = 0;
+    PrintStream ps;
+    
     try {
+        
       BufferedReader buf = new BufferedReader(new InputStreamReader(client.getInputStream()));
-
-      PrintWriter ps = new PrintWriter(client.getOutputStream(), true);
 
       boolean keepConnection = true;
       int proposed_priority;
       int[] id_original_priority = new int[2];
 
       while (keepConnection) {
-        
         String str = buf.readLine();
+        messageSender = str.substring(0, 5);
+        str = str.substring(5);
+        
         if (Node.TERMINATION_MSG.equals(str) || str == null) {
           keepConnection = false;
           notifHandler.printNoticeMsg("Lost connection with " + remoteAddress);
@@ -63,7 +69,10 @@ public class MessageReceiver implements Runnable {
           String ip = str.substring(6);
           thisNode.cancelConnectionWithIp(ip);
         } else if (str.substring(0, 3).equals("[M]")) {
-
+          
+          clientSo = thisNode.clientSockMap.get(messageSender);
+          index = thisNode.clientSockList.indexOf(clientSo);
+          ps = thisNode.outgoingStreamList.get(index);
           Message co = null;
            
           // calculation of proposed priority
@@ -91,7 +100,7 @@ public class MessageReceiver implements Runnable {
           thisNode.sendList.add(m);
 
           // send back to the sender of this message
-          str = String.format("[PP]%d.%d" + " " + "[OP]%d.%d", m.priority[0], m.priority[1], 
+          str = String.format("%s[PP]%d.%d" + " " + "[OP]%d.%d", thisNode.nodeId, m.priority[0], m.priority[1], 
               m.original_priority[0], m.original_priority[1]);
           ps.println(str);
           System.out.println("proposed priority sent back to message sender!");
@@ -127,7 +136,7 @@ public class MessageReceiver implements Runnable {
           if (msglo.size() == thisNode.TotalNodeNum){
             int[] agreed_priority = new int[2];
             agreed_priority = msglo.peek().priority;
-            str = String.format("[AP]%d.%d" + " " + "[OP]%d.%d",agreed_priority[0], agreed_priority[1],
+            str = String.format("%s[AP]%d.%d" + " " + "[OP]%d.%d", thisNode.nodeId, agreed_priority[0], agreed_priority[1],
                   msglo.peek().getOriPrio()[0],
                   msglo.peek().getOriPrio()[1]);
             thisNode.multicastMessage(str);
@@ -157,16 +166,6 @@ public class MessageReceiver implements Runnable {
             while (thisNode.sendList.peek().label.equals("deliverable")) {
               mo = thisNode.sendList.poll();
               int senderPort = mo.getOriPrio()[1];
-//              String senderIP = null;
-//              IpTools tool = new IpTools();
-//              ArrayList<String> portInfo = tool.readAddressBook("../res/address.txt");
-//              for (String s : portInfo) {
-//                if (Integer.parseInt(s.split(":")[1]) == senderPort){
-//                  senderIP = s.split(":")[0];
-//                  break;
-//                }
-//              }
-//            String syso = String.format("[%s:%d]%s", senderIP, senderPort, mo.message.substring(3));
               String syso = String.format("[%d]%s", senderPort, mo.message.substring(3));
               System.out.println(syso);
             }
@@ -201,16 +200,6 @@ public class MessageReceiver implements Runnable {
           while (thisNode.sendList.peek().label.equals("deliverable")) {
             mo = thisNode.sendList.poll();
             int senderPort = mo.getOriPrio()[1];
-//          String senderIP = null;
-//          IpTools tool = new IpTools();
-//          ArrayList<String> portInfo = tool.readAddressBook("../res/address.txt");
-//          for (String s : portInfo) {
-//             if (Integer.parseInt(s.split(":")[1]) == senderPort){
-//               senderIP = s.split(":")[0];
-//                break;
-//              }
-//            }
-//          String syso = String.format("[%s:%d]%s", senderIP, senderPort, mo.message.substring(3));
             String syso = String.format("[%d]%s", senderPort, mo.message.substring(3));
             System.out.println(syso);
           }

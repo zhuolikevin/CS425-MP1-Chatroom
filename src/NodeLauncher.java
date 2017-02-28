@@ -118,7 +118,7 @@ public class NodeLauncher {
 
         else {
 
-         str = "[M]" + str ;
+         str = thisNode.nodeId + "[M]" + str ;
          Message co = null;
 
          // calculation of proposed priority

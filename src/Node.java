@@ -15,18 +15,15 @@ public class Node {
   public static final int DEFAULT_PORT = 10000;
   public static final String TERMINATION_MSG = "bye";
   //revise the TotoalNodeNum to 8
-  public static final int TotalNodeNum = 2;
+  public static final int TotalNodeNum = 2;  // Test locally
 
   public int total_priority = 0;
-//  public int proposed_priority = 0;
-  //To Do: change to priority queue(heap) to reduce complexity
-
-//  public List<Message> sendList = new ArrayList<Message>();
-//  public List<List<Message>> msgList = new ArrayList<List<Message>>();
   public PriorityQueue<Message> sendList = new PriorityQueue<Message> (1, MyComparator1);
   public List<Queue<Message>> msgList = new ArrayList<Queue<Message>>();
 
   protected int portNum;
+  protected String nodeId = String.valueOf(portNum);
+  
   protected boolean readyFlag = false;
   protected ArrayList<Socket> clientSockList = new ArrayList<>();
   protected HashMap<String, Socket> clientSockMap = new HashMap<>();
@@ -61,7 +58,7 @@ public class Node {
     try {
       Socket connectionSocket = new Socket(ip, port);
       clientSockList.add(connectionSocket);
-      clientSockMap.put(ip, connectionSocket);
+      clientSockMap.put(String.valueOf(port), connectionSocket);
       outgoingStreamList.add(new PrintStream(connectionSocket.getOutputStream()));
 
       // Begin heartbeat to the node once connected
