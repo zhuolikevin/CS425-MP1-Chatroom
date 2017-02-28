@@ -27,6 +27,7 @@ public class Node {
 
   // HeartbeaterTasks
   protected HashMap<String, HeartBeater> heartBeaterTaskMap = new HashMap<>();
+  public HashMap<String, Boolean> alreadyFailedNode = new HashMap<>();
 
   // Notification Utils
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
@@ -95,11 +96,15 @@ public class Node {
   }
 
   public HeartBeater getHeartBeater(String nodeId) { return this.heartBeaterTaskMap.get(nodeId); }
+  public void removeHeartBeater(String nodeId) { this.heartBeaterTaskMap.remove(nodeId); }
 
-  public void cancelConnectionWithIp(String nodeId) throws Exception {
+  public void cancelConnectionWithNodeId(String nodeId) throws Exception {
 
     HeartBeater curHearBeat = getHeartBeater(nodeId);
-    if (curHearBeat != null) { curHearBeat.cancel(); }
+    if (curHearBeat != null) {
+      curHearBeat.cancel();
+      removeHeartBeater(nodeId);
+    }
 
     Socket outgoingSocket = getClientSocket(nodeId);
     removeSocketFromClientSockMap(nodeId);

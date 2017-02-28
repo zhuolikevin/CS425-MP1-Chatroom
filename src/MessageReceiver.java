@@ -18,7 +18,7 @@ public class MessageReceiver implements Runnable {
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
   private Node thisNode = null;
 
-  public MessageReceiver(Socket client, Node thisNode){
+  public MessageReceiver(Socket client, Node thisNode) {
     this.client = client;
     this.thisNode = thisNode;
   }
@@ -62,26 +62,20 @@ public class MessageReceiver implements Runnable {
           /* Heartbeat */
           if (!thisNode.getReadyFlag()) { continue; }
 
-          // For each message receiver, start a timer task for heartbeat
-          if (failureDetector == null) {
-            failureDetector = new FailureDetector(messageSender, client, thisNode);
-          } 
-          else {
+          if (failureDetector != null) {
             // Reset failure detection timer
             failureDetectorTimer.cancel();
             failureDetectorTimer = new Timer(true);
             failureDetector.cancel();
-            failureDetector = new FailureDetector(messageSender, client, thisNode);
           }
-          failureDetectorTimer.schedule(failureDetector, 2000000);
+          thisNode.alreadyFailedNode.put(messageSender, false);
+          failureDetector = new FailureDetector(messageSender, client, thisNode);
+          failureDetectorTimer.schedule(failureDetector, 200);
         } else if (str.length() > 6 && "[FAIL]".equals(str.substring(0, 6))) {
           /* Heartbeat Failure Informing */
-          String nodeId = str.substring(6);
-          thisNode.cancelConnectionWithIp(nodeId);
-        } 
-        
-        
-          else if (str.substring(0, 3).equals("[M]")) {
+          String failedNodeId = str.substring(6);
+          thisNode.cancelConnectionWithNodeId(failedNodeId);
+        } else if (str.substring(0, 3).equals("[M]")) {
           /* Messages */
           clientSo = thisNode.clientSockMap.get(messageSender);
           index = thisNode.clientSockList.indexOf(clientSo);
