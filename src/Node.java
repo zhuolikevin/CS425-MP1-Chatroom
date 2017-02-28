@@ -27,7 +27,7 @@ public class Node {
 
   // HeartbeaterTasks
   protected HashMap<String, HeartBeater> heartBeaterTaskMap = new HashMap<>();
-  public HashMap<String, Boolean> alreadyFailedNode = new HashMap<>();
+  public HashSet<String> connectionPool = new HashSet<>();
 
   // Notification Utils
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
@@ -61,6 +61,7 @@ public class Node {
       clientSockList.add(connectionSocket);
       clientSockMap.put(String.valueOf(port), connectionSocket);
       outgoingStreamList.add(new PrintStream(connectionSocket.getOutputStream()));
+      connectionPool.add(String.valueOf(port));
 
       // Begin heartbeat to the node once connected
       heartBeaterTaskMap.put(String.valueOf(port), new HeartBeater(connectionSocket, this));
@@ -118,6 +119,11 @@ public class Node {
     Socket incomingSocket = getServerSocket(nodeId);
     removeSocketFromServerSockMap(nodeId);
     if (incomingSocket != null) { incomingSocket.close(); }
+
+    if (connectionPool.contains(nodeId)) {
+      connectionPool.remove(nodeId);
+      totalNodeNum -= 1;
+    }
   }
 
   public Socket getClientSocket(String nodeId) { return this.clientSockMap.get(nodeId); }

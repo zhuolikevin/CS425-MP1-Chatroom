@@ -35,7 +35,6 @@ public class MessageReceiver implements Runnable {
     PrintStream ps;
     
     try {
-        
       BufferedReader buf = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
       boolean keepConnection = true;
@@ -43,7 +42,6 @@ public class MessageReceiver implements Runnable {
       int[] id_original_priority = new int[2];
 
       while (keepConnection) {
-       
         String str = buf.readLine();
         if (str == null) {
           notifHandler.printNoticeMsg("Lost connection with " + remoteAddress + " at: " + new Date().getTime());
@@ -68,7 +66,6 @@ public class MessageReceiver implements Runnable {
             failureDetectorTimer = new Timer(true);
             failureDetector.cancel();
           }
-          thisNode.alreadyFailedNode.put(messageSender, false);
           failureDetector = new FailureDetector(messageSender, client, thisNode);
           failureDetectorTimer.schedule(failureDetector, 200);
         } else if (str.length() > 6 && "[FAIL]".equals(str.substring(0, 6))) {
@@ -83,7 +80,6 @@ public class MessageReceiver implements Runnable {
           Message co = null;
            
           // calculation of proposed priority
-
           if (thisNode.sendList.size() == 0) {
             proposed_priority = thisNode.total_priority + 1;
           } else {
@@ -109,19 +105,14 @@ public class MessageReceiver implements Runnable {
           str = String.format("%s[PP]%d.%d" + "[OP]%d.%d", thisNode.nodeId, m.priority[0], m.priority[1], 
               m.original_priority[0], m.original_priority[1]);
           ps.println(str);
-
-          //continue;
-        } 
-          else if (str.substring(0, 4).equals("[PP]")) {
-
+        } else if (str.substring(0, 4).equals("[PP]")) {
+          /* Proposed Priority */
           id_original_priority[0] = Integer.parseInt(str.split("\\[PP]|\\[OP]")[2].split("\\.")[0]);
           id_original_priority[1]  = Integer.parseInt(str.split("\\[PP]|\\[OP]")[2].split("\\.")[1]);
           Message mo = null;
           Queue<Message> msglo = null;
 
-          
           for(Message n : thisNode.sendList){
-              
             if (n.original_priority[0] == id_original_priority[0] &&
                 n.original_priority[1] == id_original_priority[1]){
               mo = n;
@@ -132,7 +123,7 @@ public class MessageReceiver implements Runnable {
             }
           }
 
-          for(Queue<Message> msgl: thisNode.msgList){
+          for(Queue<Message> msgl: thisNode.msgList) {
             Message msglM = msgl.peek();
             if (msglM.original_priority[0] == id_original_priority[0]
               && msglM.original_priority[1] == id_original_priority[1]) {
@@ -143,7 +134,7 @@ public class MessageReceiver implements Runnable {
           }
 
           // check if agreed priority can be acquired
-          if (msglo.size() == thisNode.totalNodeNum){
+          if (msglo.size() == thisNode.totalNodeNum) {
             int[] agreed_priority = new int[2];
             agreed_priority = msglo.peek().priority;
             str = String.format("%s[AP]%d.%d" + "[OP]%d.%d", thisNode.nodeId, agreed_priority[0], agreed_priority[1],
@@ -165,7 +156,7 @@ public class MessageReceiver implements Runnable {
           
             // find the existing max priority in sendList to update the total_priority before check delivery
             int count = 0;
-            Queue<Message> rec = new PriorityQueue<Message>(thisNode.sendList);
+            Queue<Message> rec = new PriorityQueue<>(thisNode.sendList);
             while (count < thisNode.sendList.size()) {
               mo = rec.poll();
               count += 1;
@@ -199,7 +190,7 @@ public class MessageReceiver implements Runnable {
       
           // find the existing max priority in sendList to update the total_priority before check delivery
           int count = 0;
-          Queue<Message> rec = new PriorityQueue<Message>(thisNode.sendList);
+          Queue<Message> rec = new PriorityQueue<>(thisNode.sendList);
           while (count < thisNode.sendList.size()) {
             mo = rec.poll();
             count += 1;
@@ -207,19 +198,14 @@ public class MessageReceiver implements Runnable {
           thisNode.total_priority = mo.priority[0];
       
           // self check for deliverable messages
-      
           while (!thisNode.sendList.isEmpty() && thisNode.sendList.peek().label.equals("deliverable")) {
             mo = thisNode.sendList.poll();
             int senderPort = mo.getOriPrio()[1];
-            //
             String syso = String.format("[%d]%s", senderPort, mo.message);
             System.out.println(syso);
           }
           System.out.print(">> ");
-        }
-        else{
-            System.out.println("Error!");
-        }
+        } else { notifHandler.printNoticeMsg("Non-exhausted Condition"); }
       }
       client.close();
     } catch (SocketException e) {
