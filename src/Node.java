@@ -2,25 +2,20 @@ import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Timer;
-
-import mputil.NodeNotifHandler;
 import java.util.*;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import mputil.NodeNotifHandler;
 
 public class Node {
   public static final int DEFAULT_PORT = 10000;
   public static final String TERMINATION_MSG = "bye";
-  //revise the TotoalNodeNum to 8
-  public static final int TotalNodeNum = 2;  // Test locally
 
+  // ISIS Total Ordering
+  public int totalNodeNum;
   public int total_priority = 0;
-  public PriorityQueue<Message> sendList = new PriorityQueue<Message> (1, MyComparator1);
-  public List<Queue<Message>> msgList = new ArrayList<Queue<Message>>();
+  public PriorityQueue<Message> sendList = new PriorityQueue<> (1, MyComparator1);
+  public List<Queue<Message>> msgList = new ArrayList<>();
 
+  // Connection Status
   protected int portNum;
   protected String nodeId = String.valueOf(portNum);
   
@@ -30,23 +25,22 @@ public class Node {
   protected HashMap<String, Socket> serverSockMap = new HashMap<>();
   protected ArrayList<PrintStream> outgoingStreamList = new ArrayList<>();
 
+  // HeartbeaterTasks
   protected HashMap<String, HeartBeater> heartBeaterTaskMap = new HashMap<>();
 
+  // Notification Utils
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
 
-  public Node() { this.portNum = DEFAULT_PORT;
-  }
-
+  public Node() { this.portNum = DEFAULT_PORT; }
   public Node(int port) { this.portNum = port; }
 
   public void setupServer(Node thisNode) {
     try {
-      
       ServerSocket server = new ServerSocket(portNum);
       InetAddress currentIp = InetAddress.getLocalHost();
       System.out.println("Current IP Address: " +
-              currentIp.getHostAddress() + ":" +
-              String.valueOf(portNum));
+          currentIp.getHostAddress() + ":" +
+          String.valueOf(portNum));
       new Thread(new ConnectionListener(server, thisNode)).start();
     } catch (Exception e) {
       notifHandler.printExceptionMsg(e, "Cannot set up server");

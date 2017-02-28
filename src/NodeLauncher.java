@@ -1,11 +1,8 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.PriorityQueue;
 import java.io.IOException;
+import java.util.*;
+
 import mputil.*;
 
 public class NodeLauncher {
@@ -46,6 +43,9 @@ public class NodeLauncher {
       thisNode.setReadyFlag();
 
       ArrayList<String> addressList = tool.readAddressBook(args[1]);
+
+      thisNode.totalNodeNum = addressList.size();
+
       for (int i = 0; i < addressList.size(); i++) {
         inputIp = tool.parseIpPort(addressList.get(i))[0];
         if (!tool.isValidIp(inputIp)) {
@@ -68,6 +68,8 @@ public class NodeLauncher {
       int connectionNum = Integer.parseInt(keyboardInput.readLine());
       Scanner scanner;
       int i = 0;
+
+      thisNode.totalNodeNum = connectionNum + 1;
 
       while (i < connectionNum) {
         scanner = new Scanner(System.in);
@@ -93,30 +95,27 @@ public class NodeLauncher {
       }
     }
 
+    Runtime.getRuntime().addShutdownHook(new Thread() {
+      public void run() {
+        System.out.println("Shutdown Timestamp:" + new Date().getTime());
+      }
+    });
 
-   boolean keepChatting = true;
-   int proposed_priority;
+    /* Keyboard Input */
+    boolean keepChatting = true;
+    int proposed_priority;
 
-      while (keepChatting) {
-        System.out.print(">> ");
-        String str = null;
-    try {
-      str =  keyboardInput.readLine();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
-        if ("".equals(str)) { continue; }
+    while (keepChatting) {
+      System.out.print(">> ");
+      String str = null;
+      try { str =  keyboardInput.readLine(); }
+      catch (IOException e) { e.printStackTrace(); }
 
-        else if (Node.TERMINATION_MSG.equals(str)) {
-            thisNode.closeAllConnections();
-            keepChatting = false;
-          }
-
-
-        //ISIS Send
-
-        else {
+      if ("".equals(str)) { continue; }
+      else if (Node.TERMINATION_MSG.equals(str)) {
+        thisNode.closeAllConnections();
+        keepChatting = false;
+      } else {
 
          str = thisNode.nodeId + "[M]" + str ;
          Message co = null;
@@ -125,8 +124,7 @@ public class NodeLauncher {
 
          if (thisNode.sendList.size() == 0) {
            proposed_priority = thisNode.total_priority + 1;
-         }
-         else {
+         } else {
            int count = 0;
            Queue<Message> rec = new PriorityQueue(thisNode.sendList);
            while (count < thisNode.sendList.size()) {
@@ -151,24 +149,18 @@ public class NodeLauncher {
 
          str = String.format(str + " " + "[OP]%d.%d", proposed_priority, thisNode.portNum);
          thisNode.multicastMessage(str);
-       }
       }
-
-      try {
-      keyboardInput.close();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
     }
-      System.exit(0);
-        }
+
+    try { keyboardInput.close(); }
+    catch (IOException e) { e.printStackTrace(); }
+    System.exit(0);
+  }
 
   public static Comparator<Message> MyComparator2 = new Comparator<Message>() {
     public int compare (Message msg1, Message msg2) {
-      if (msg1.priority[0] < msg2.priority[0])   // the smaller, the latter
-        return 1;
-      else if (msg1.priority[0] == msg2.priority[0])
-      {
+      if (msg1.priority[0] < msg2.priority[0]) { return 1; }
+      else if (msg1.priority[0] == msg2.priority[0]) {
         if(msg1.priority[1] < msg2.priority[1])
           return 1;
         else if(msg1.priority[1] == msg2.priority[1])
@@ -178,5 +170,4 @@ public class NodeLauncher {
       else return -1;
     }
   };
-
-  }
+}

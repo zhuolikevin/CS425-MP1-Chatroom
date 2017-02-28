@@ -1,15 +1,11 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Date;
 import java.util.Timer;
-import java.util.ArrayList;
 import java.util.Queue;
 import java.util.PriorityQueue;
-import mputil.IpTools;
 import mputil.NodeNotifHandler;
 
 public class MessageReceiver implements Runnable {
@@ -133,7 +129,7 @@ public class MessageReceiver implements Runnable {
           }
 
           // check if agreed priority can be acquired
-          if (msglo.size() == thisNode.TotalNodeNum){
+          if (msglo.size() == thisNode.totalNodeNum){
             int[] agreed_priority = new int[2];
             agreed_priority = msglo.peek().priority;
             str = String.format("%s[AP]%d.%d" + " " + "[OP]%d.%d", thisNode.nodeId, agreed_priority[0], agreed_priority[1],
