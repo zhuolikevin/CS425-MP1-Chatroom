@@ -7,7 +7,7 @@
     ```bash
     $ ant
     ```
-  
+
  This will generate a directory named `dist/`. The complied and packed `.jar` package is inside.
 
 - Move to `dist/`, and Run the **cs425-mp1.jar** with specified port number and address file if needed.
@@ -15,11 +15,25 @@
     ```bash
     $ java -jar cs425-mp1.jar [port] [address_file]
     ```
-  
+
     for example:
-  
+
     ```bash
     $ java -jar cs425-mp1.jar 10001 address_test.txt
+    ```
+
+## Plot Results
+
+- We use `matplotlib` for plotting in python. You can install it via `pip`
+
+    ```bash
+    $ pip install matplotlib
+    ```
+
+- Run the `plot.py` script
+
+    ```bash
+    $ python matplotlib
     ```
 
 ## Send program to virtual machines
@@ -29,7 +43,7 @@
     ```bash
     $ brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
     ```
-    
+
 - If we want to send `dist/` and `res/` to vms, and run the codes on them. Just use the **send_to_vms.sh** script.
 
     ```bash

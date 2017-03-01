@@ -1,9 +1,11 @@
 import java.util.TimerTask;
 
-public class PrintMsgNum extends TimerTask{
+public class PrintMsgNum extends TimerTask {
     Node thisNode;
-    public PrintMsgNum (Node thisNode) {this.thisNode = thisNode;}
-    public void run () {
-        System.out.println(thisNode.numHB);
+    public PrintMsgNum(Node thisNode) { this.thisNode = thisNode; }
+
+    @Override
+    public void run() {
+        System.out.println("[EVALUATION]: " + thisNode.numHB);
     }
 }

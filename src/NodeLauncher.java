@@ -95,6 +95,7 @@ public class NodeLauncher {
       }
     }
 
+    // [Evaluation] Evaluate failure detection time
     Runtime.getRuntime().addShutdownHook(new Thread() {
       public void run() {
         System.out.println("Shutdown Timestamp:" + new Date().getTime());
@@ -137,7 +138,6 @@ public class NodeLauncher {
          }
          thisNode.totalPriority = proposedPriority;
 
-        // To Do: How to avoid concurrent modification of thisNode.totalPriority
          message = str.substring(8);
          Message m = new Message(message);
          m.original_priority[0] = proposedPriority;

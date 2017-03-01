@@ -68,8 +68,9 @@ public class Node {
       heartBeaterTaskMap.put(String.valueOf(port), new HeartBeater(connectionSocket, this));
       Timer timer = new Timer(true);
       timer.schedule(heartBeaterTaskMap.get(String.valueOf(port)), 0, 100);
-      Timer timerBW = new Timer(true);
-      timerBW.schedule(new PrintMsgNum(this), 10000);
+      // [Evaluation] evaluate bandwidth
+//      Timer timerBW = new Timer(true);
+//      timerBW.schedule(new PrintMsgNum(this), 10000);
 
       return true;
     } catch (Exception e) {
