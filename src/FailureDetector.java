@@ -1,33 +1,33 @@
 import mputil.*;
 import java.net.Socket;
+import java.util.Date;
 import java.util.TimerTask;
 
 public class FailureDetector extends TimerTask {
+  private String nodeId;
   private Socket client;
   private Node thisNode;
 
   private NodeNotifHandler notifHandler = new NodeNotifHandler();
 
-  public FailureDetector(Socket connectedClient, Node thisNode) {
-    this.client = connectedClient;
+  public FailureDetector(String nodeId, Socket client, Node thisNode) {
+    this.nodeId = nodeId;
+    this.client = client;
     this.thisNode = thisNode;
   }
 
   @Override
   public void run() {
-    if (thisNode.getReadyFlag()) {
-      notifHandler.printNoticeMsg("Fail to receive HB from " + client.getRemoteSocketAddress());
-
-      IpTools tool = new IpTools();
-      String ip = tool.parseIpPort(client.getRemoteSocketAddress().toString().substring(1))[0];
+    if (thisNode.getReadyFlag() && thisNode.connectionPool.contains(nodeId)) {
+      notifHandler.printNoticeMsg("Fail to receive HB from [" + nodeId + "] at: " + new Date().getTime());
 
       try {
-        thisNode.cancelConnectionWithIp(ip);
+        thisNode.cancelConnectionWithNodeId(nodeId);
       } catch (Exception e) {
-        notifHandler.printExceptionMsg(e, "Cannot cancel connections with " + ip);
+        notifHandler.printExceptionMsg(e, "Cannot cancel connections with [" + nodeId + "]");
       }
 
-    thisNode.multicastMessage("[FAIL]" + ip);
+//      thisNode.multicastMessage(thisNode.nodeId + "[FAIL]" + nodeId);
     }
   }
 }
