@@ -16,5 +16,6 @@ public class HeartBeater extends TimerTask {
   @Override
   public void run() {
     outgoingStream.println(thisNode.nodeId + "[HB]");
+    thisNode.numHB += 1;
   }
 }

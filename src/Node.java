@@ -8,6 +8,7 @@ import mputil.NodeNotifHandler;
 public class Node {
   public static final int DEFAULT_PORT = 10000;
   public static final String TERMINATION_MSG = "bye";
+  public static int numHB = 0;
 
   // ISIS Total Ordering
   public int totalNodeNum;
@@ -67,6 +68,8 @@ public class Node {
       heartBeaterTaskMap.put(String.valueOf(port), new HeartBeater(connectionSocket, this));
       Timer timer = new Timer(true);
       timer.schedule(heartBeaterTaskMap.get(String.valueOf(port)), 0, 100);
+      Timer timerBW = new Timer(true);
+      timerBW.schedule(new PrintMsgNum(this), 10000);
 
       return true;
     } catch (Exception e) {

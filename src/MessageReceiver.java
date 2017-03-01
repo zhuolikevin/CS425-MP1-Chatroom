@@ -66,8 +66,12 @@ public class MessageReceiver implements Runnable {
             failureDetectorTimer = new Timer(true);
             failureDetector.cancel();
           }
+<<<<<<< cf25170ea999a47456ce6bc3d44c934ce6402b04
           failureDetector = new FailureDetector(messageSender, client, thisNode);
           failureDetectorTimer.schedule(failureDetector, 1600);
+=======
+          failureDetectorTimer.schedule(failureDetector, 200);
+>>>>>>> test bandwidth
         } else if (str.length() > 6 && "[FAIL]".equals(str.substring(0, 6))) {
           /* Heartbeat Failure Informing */
           String failedNodeId = str.substring(6);
