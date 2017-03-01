@@ -103,7 +103,7 @@ public class NodeLauncher {
 
     /* Keyboard Input */
     boolean keepChatting = true;
-    int proposed_priority;
+    int proposedPriority;
     String str = null;
     String message = null;
 
@@ -125,7 +125,7 @@ public class NodeLauncher {
          // calculation of proposed priority
 
          if (thisNode.sendList.size() == 0) {
-           proposed_priority = thisNode.total_priority + 1;
+           proposedPriority = thisNode.totalPriority + 1;
          } else {
            int count = 0;
            Queue<Message> rec = new PriorityQueue(thisNode.sendList);
@@ -133,23 +133,23 @@ public class NodeLauncher {
              co = rec.poll();
              count += 1;
            }
-           proposed_priority = co.priority[0] + 1;
+           proposedPriority = co.priority[0] + 1;
          }
-         thisNode.total_priority = proposed_priority;
+         thisNode.totalPriority = proposedPriority;
 
-        // To Do: How to avoid concurrent modification of thisNode.total_priority
+        // To Do: How to avoid concurrent modification of thisNode.totalPriority
          message = str.substring(8);
          Message m = new Message(message);
-         m.original_priority[0] = proposed_priority;
+         m.original_priority[0] = proposedPriority;
          m.original_priority[1] = thisNode.portNum;
-         m.priority[0] = proposed_priority;
+         m.priority[0] = proposedPriority;
          m.priority[1] = thisNode.portNum;
          thisNode.sendList.add(m);
          Queue<Message> temp = new PriorityQueue<Message>(1, MyComparator2);
          temp.add(m);
          thisNode.msgList.add(temp);
 
-         str = String.format(str + "[OP]%d.%d", proposed_priority, thisNode.portNum);
+         str = String.format(str + "[OP]%d.%d", proposedPriority, thisNode.portNum);
          thisNode.multicastMessage(str);
       }
     }

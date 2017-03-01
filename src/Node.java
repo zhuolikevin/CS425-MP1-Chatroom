@@ -11,14 +11,14 @@ public class Node {
 
   // ISIS Total Ordering
   public int totalNodeNum;
-  public int total_priority = 0;
+  public int totalPriority = 0;
   public PriorityQueue<Message> sendList = new PriorityQueue<> (1, MyComparator1);
   public List<Queue<Message>> msgList = new ArrayList<>();
 
   // Connection Status
   protected int portNum;
   protected String nodeId;
-  
+
   protected boolean readyFlag = false;
   protected ArrayList<Socket> clientSockList = new ArrayList<>();
   protected HashMap<String, Socket> clientSockMap = new HashMap<>();
