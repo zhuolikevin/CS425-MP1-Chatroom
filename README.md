@@ -1,4 +1,4 @@
-# CS425/ECE428 Distributed Systems MP1
+# CS425/ECE428 ISIS-based Total Order Chatroom
 
 ## Run the program
 
